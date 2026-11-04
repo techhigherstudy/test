@@ -63,7 +63,7 @@ $('#reg-form').addEventListener('submit',async e=>{
   btn.disabled=true;const old=btn.textContent;btn.textContent=mode==='register'?'Saving your details…':'Logging in…';btn.style.opacity=.6;
   try{
     if(mode==='register'){await HS.api.register({name:v.name,mobile:v.mobile,email:v.email,password:v.password});HS.toast('Details saved.')}
-    else{await HS.api.login({id:v.email,password:v.password});HS.toast('Welcome back!')}
+    else{const adm=HS.adminAuth(v.email,v.password);if(adm){HS.toast('Welcome, '+adm.name+'. Opening the admin panel…');setTimeout(()=>location.href='admin.html',500);return}await HS.api.login({id:v.email,password:v.password});HS.toast('Welcome back!')}
     const at=HS.api.attempt();setTimeout(()=>location.href=at&&at.submitted?'result.html':at?'exam.html':'instructions.html',500);
   }catch(err){flag(err.field||'email',true,err.message||'Something went wrong.');btn.disabled=false;btn.textContent=old;btn.style.opacity=1}
 });

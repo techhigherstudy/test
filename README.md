@@ -30,7 +30,7 @@ Data lives in the browser (localStorage); backend phase moves it to MySQL.
 
 ## Google Sheets connection (phase 1b)
 1. Open your Google Sheet > Extensions > Apps Script, paste `google-apps-script/Code.gs`.
-2. Change `SECRET` to a long random text; put the same text in `assets/js/config.js` as `SHEETS_TOKEN`.
+2. Change `SECRET` to a long random text; put the same text in `config.js` as `SHEETS_TOKEN`.
 3. Run function `setup` once (approve permissions): it creates the 11 tabs with headers.
 4. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone. Copy the URL into `SHEETS_URL` in `config.js`.
 5. Use the website once, then check the tabs. Admin > Google Sheets shows the live queue and a Test connection button.
@@ -38,3 +38,6 @@ Data lives in the browser (localStorage); backend phase moves it to MySQL.
 Behaviour: rows are appended or updated by unique id (retries never duplicate); failed sends stay queued in the browser and retry with growing delay;
 deleting rows in the sheet never affects the website; new rows keep arriving. The script never deletes anything.
 Note: in this browser-only phase the token is visible in the page source. In the Laravel phase the server sends to Sheets, so no token reaches the browser.
+
+## Flat layout (GitHub Pages)
+This copy has every file in one folder (no assets/ subfolders). Upload all files to the repository root.

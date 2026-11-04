@@ -34,16 +34,25 @@ HS.cmsDefault={heroPre:'Prepare for CAT with',heroEm:'online mock tests',heroTex
  footerText:'Realistic mock tests, instant analysis and free counselling to help you get into your dream college.',contactEmail:'support@higher.study',banner:{on:false,text:''}};
 HS.cms=function(){try{return Object.assign({},HS.cmsDefault,JSON.parse(localStorage.getItem('hs_cms')||'{}'))}catch(e){return HS.cmsDefault}};
 HS.menu=HS.cms().menu.map(m=>{const d=HS.cmsDefault.menu.find(x=>x.t===m.t);return Object.assign({},m,m.href?{}:{href:d&&d.href||'#'})});
+HS.ADMINS0=[{id:1,name:'Super Admin',email:'admin@higher.study',pw:'Admin@12345',role:'Super Admin',active:true},
+ {id:2,name:'Priya (Content)',email:'content@higher.study',pw:'Content@12345',role:'Content Manager',active:true},
+ {id:3,name:'Rahul (Leads)',email:'leads@higher.study',pw:'Leads@12345',role:'Lead Manager',active:true}];
+/* Admin sign-in from the main login popup. Reads the same admin list the panel uses (includes admins created in the panel). Backend phase: one /login endpoint returns the role. */
+HS.adminAuth=function(id,pw){try{const st=JSON.parse(localStorage.getItem('hs_admin_v2')||'null'),list=(st&&st.admins)||HS.ADMINS0;
+  const a=list.find(x=>x.email.toLowerCase()===String(id).trim().toLowerCase()&&x.pw===pw&&x.active);
+  if(a){localStorage.setItem('hs_admin_session',a.email);localStorage.setItem('hs_admin_via','main');return a}}catch(e){}return null};
 HS.counsellingUrl=()=>(window.HS_CONFIG&&HS_CONFIG.COUNSELLING_URL)||'https://higher.study/enquiry/admissions-2026';
 HS.isExternal=u=>/^https?:\/\//i.test(u)&&!u.startsWith(location.origin);
 HS.header=function(crumbs){
   const u=HS.api&&HS.api.me();
   const nav=HS.menu.map(m=>`<a href="${HS.esc(m.href||'#')}"${HS.isExternal(m.href||'')?' target="_blank" rel="noopener"':''}>${m.t}${m.badge?`<span class="badge-free">${m.badge}</span>`:''}${m.dd?HS.icons.chev:''}</a>`).join('');
-  const right=u?`<a class="btn btn-outline" href="result.html">My dashboard</a><a href="#" id="signout" style="font-weight:600">Sign out</a>`:`<button class="btn btn-primary btn-lg" data-open-register style="padding:14px 28px">Login / Register</button>`;
+  let adm=null;try{adm=localStorage.getItem('hs_admin_session')}catch(e){}
+  const admBtn=adm?`<a class="btn btn-outline" href="admin.html">Admin panel</a>`:'';
+  const right=admBtn+(u?`<a class="btn btn-outline" href="result.html">My dashboard</a><a href="#" id="signout" style="font-weight:600">Sign out</a>`:`<button class="btn btn-primary btn-lg" data-open-register style="padding:14px 28px">Login / Register</button>`);
   const cr=(crumbs||[]).map((c,i)=>i===crumbs.length-1?`<span class="cur">${c[0]}</span>`:`<a href="${c[1]||'#'}">${c[0]}</a><span>›</span>`).join('');
   const bn=HS.cms().banner;document.getElementById('site-header').innerHTML=(bn&&bn.on&&bn.text?`<div style="background:var(--yellow);color:#4a2a00;text-align:center;padding:8px 16px;font-weight:700;font-size:14px">${HS.esc(bn.text)}</div>`:'')+`
   <header class="site-header"><div class="container bar">
-    <a class="brand" href="index.html"><img src="assets/img/logo.svg" alt="higher.study logo"><span>higher.study</span></a>
+    <a class="brand" href="index.html"><img src="logo.svg" alt="higher.study logo"><span>higher.study</span></a>
     <nav class="nav" id="nav">${nav}</nav>
     <div class="header-actions">${right}<button class="icon-btn hide-sm" aria-label="Search">${HS.icons.search}</button><button class="icon-btn hamburger" id="burger" aria-label="Menu"><svg width="26" height="26" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" fill="none"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button></div>
   </div></header>
@@ -57,7 +66,7 @@ HS.footer=function(){
    <div><h4>higher.study</h4><p>${HS.esc(HS.cms().footerText)}</p><p>${HS.esc(HS.cms().contactEmail)}</p></div>
    <div><h4>Exams</h4><a href="#">CAT</a><a href="#">XAT</a><a href="#">SNAP</a><a href="#">NMAT</a></div>
    <div><h4>Resources</h4><a href="#">Free Resources</a><a href="#">Blog</a><a href="#">Tools</a></div>
-   <div><h4>Company</h4><a href="#">About</a><a href="#">Contact</a><a href="#">Terms</a><a href="#">Privacy Policy</a><a href="admin.html">Admin login</a></div>
+   <div><h4>Company</h4><a href="#">About</a><a href="#">Contact</a><a href="#">Terms</a><a href="#">Privacy Policy</a></div>
   </div><div class="copy">© ${new Date().getFullYear()} higher.study. All rights reserved.</div></div></footer>`;
 };
 HS.fmt=sec=>{sec=Math.max(0,Math.floor(sec));const h=String(Math.floor(sec/3600)).padStart(2,'0'),m=String(Math.floor(sec%3600/60)).padStart(2,'0'),s=String(sec%60).padStart(2,'0');return `${h}:${m}:${s}`};
@@ -111,7 +120,7 @@ HS.sheet=(function(){
     send('Exam_Results',{attempt_id:at.id,lead_id:u.leadId||'',student_id:u.studentId||'',name:u.name||'',exam:'CAT Full Length Mock 1',marks:r.marks,max_marks:r.max,percentage:r.percentage,attempted:r.attempted,correct:r.correct,wrong:r.wrong,accuracy:r.accuracy,time_taken_sec:r.timeTakenSec,submitted_at:new Date(at.submittedAt).toISOString(),
       VARC_marks:r.sections[0].marks,DILR_marks:r.sections[1].marks,QA_marks:r.sections[2].marks},{id:'RES-'+at.id,mode:'upsert'});
     (rows||[]).forEach(x=>send('Exam_Responses',Object.assign({attempt_id:at.id,lead_id:u.leadId||'',exam:'CAT Full Length Mock 1'},x),{id:'RSP-'+at.id+'-'+x.question_no,mode:'upsert'}));}
-  async function ping(){const c=HS.cfg();if(!c.SHEETS_URL)return{ok:false,error:'SHEETS_URL is empty in assets/js/config.js'};
+  async function ping(){const c=HS.cfg();if(!c.SHEETS_URL)return{ok:false,error:'SHEETS_URL is empty in config.js'};
     try{const r=await fetch(c.SHEETS_URL+(c.SHEETS_URL.includes('?')?'&':'?')+'action=ping&token='+encodeURIComponent(c.SHEETS_TOKEN));return await r.json()}catch(e){return{ok:false,error:'Could not read the reply (browser blocked it or the URL is wrong). Check the sheet for new rows instead.'}}}
   return {send,flush:()=>flush(true),event,lead,results,ping,status:()=>Object.assign({configured:!!HS.cfg().SHEETS_URL,pending:gq().length,sent:0,fails:0},gs())};
 })();

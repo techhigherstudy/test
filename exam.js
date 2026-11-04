@@ -27,7 +27,7 @@ function finish(auto){clearInterval(tick);HS.api.submit(at);if(auto)HS.toast('Ti
 function shell(){
   $('#app').innerHTML=`
   <div class="ex-top"><div class="container row1" style="max-width:1500px">
-    <div class="ex-logo"><img src="assets/img/logo.svg" alt="higher.study"></div>
+    <div class="ex-logo"><img src="logo.svg" alt="higher.study"></div>
     <div class="timer-box"><div><div class="lbl" id="tlabel"></div><div class="time" id="timer">00:00:00</div></div><button class="btn-submit" id="btn-submit-top">Submit Test</button></div>
   </div>
   <div class="ex-secbar"><div class="container" style="max-width:1500px" id="tabs"></div></div></div>

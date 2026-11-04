@@ -19,9 +19,7 @@ const ROLES0={
  'Lead Manager':only({dashboard:['view'],leads:['view','edit','export'],activity:['view'],students:['view'],counselling:['view','edit','add']}),
  'Counselling Manager':only({dashboard:['view'],counselling:['view','add','edit','export'],leads:['view']}),
  'Reports Manager':only({dashboard:['view'],leads:['view','export'],audit:['view']})};
-const ADM0=[{id:1,name:'Super Admin',email:'admin@higher.study',pw:'Admin@12345',role:'Super Admin',active:true},
- {id:2,name:'Priya (Content)',email:'content@higher.study',pw:'Content@12345',role:'Content Manager',active:true},
- {id:3,name:'Rahul (Leads)',email:'leads@higher.study',pw:'Leads@12345',role:'Lead Manager',active:true}];
+const ADM0=HS.ADMINS0;
 const COUNS=['Anita Sharma','Vikram Rao','Neha Gupta','Imran Khan'], MGRS=['Suresh Iyer','Meera Nair'];
 
 /* ---------- store ---------- */
@@ -221,7 +219,7 @@ P.cms=()=>{const c=HS.cms(),ed=can('cms','edit');return `<div class="notice">Edi
   ${ed?'<div class="ml"><button class="btn-s p" data-act="savecms">Publish changes</button><button class="btn-s" data-act="resetcms">Reset to defaults</button></div>':'<p style="color:var(--muted)">View only.</p>'}`};
 P.sheets=()=>{const live=HS.sheet.status(),s=S.sheets,tabs=['Website_Visitors','All_Leads','Registrations','Exam_Activity','Exam_Responses','Exam_Results','Lead_Stages','Counselling_Leads','Counsellor_Activity','Website_Content','System_Logs'],ed=can('sheets','edit');
   return `<div class="panel-a"><h3>Live website → Google Sheet queue</h3><div class="kpis-a" style="grid-template-columns:repeat(4,1fr)"><div class="kpi-a"><span>Configured</span><b style="font-size:20px;color:${live.configured?'var(--green)':'var(--danger)'}">${live.configured?'Yes':'No URL set'}</b></div><div class="kpi-a"><span>Waiting to send</span><b>${live.pending}</b></div><div class="kpi-a"><span>Sent from this browser</span><b>${live.sent||0}</b></div><div class="kpi-a"><span>Last successful send</span><b style="font-size:15px">${dt(live.lastOk)}</b></div></div>
-  ${live.lastErr?`<p style="color:var(--danger);font-size:13px">Last error: ${esc(live.lastErr)} (retrying automatically with increasing delay)</p>`:''}<div class="ml"><button class="btn-s" data-act="sh-ping">Test connection</button><button class="btn-s p" data-act="sh-flush">Send queued now</button></div><div class="logline" id="ping-out" style="margin-top:12px">Set SHEETS_URL and SHEETS_TOKEN in assets/js/config.js, then click Test connection.</div></div>
+  ${live.lastErr?`<p style="color:var(--danger);font-size:13px">Last error: ${esc(live.lastErr)} (retrying automatically with increasing delay)</p>`:''}<div class="ml"><button class="btn-s" data-act="sh-ping">Test connection</button><button class="btn-s p" data-act="sh-flush">Send queued now</button></div><div class="logline" id="ping-out" style="margin-top:12px">Set SHEETS_URL and SHEETS_TOKEN in config.js, then click Test connection.</div></div>
   <div class="notice"><b>Simulated below.</b> The cards and buttons under this line are a preview of the final dashboard (restore from MySQL, failed-record retry) and only change demo counters.</div>
   <div class="kpis-a"><div class="kpi-a"><span>Connection</span><b style="font-size:20px;color:${s.connected?'var(--green)':'var(--danger)'}">${s.connected?'Connected':'Disconnected'}</b></div><div class="kpi-a"><span>Last successful sync</span><b style="font-size:16px">${dt(s.lastSync)}</b></div><div class="kpi-a"><span>Records synchronized</span><b>${s.synced}</b></div><div class="kpi-a"><span>Pending</span><b>${s.pending}</b></div><div class="kpi-a"><span>Failed</span><b style="color:var(--danger)">${s.failed}</b></div></div>
   <div class="panel-a"><h3>${esc(s.sheetName)}</h3><div class="ml">${tabs.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
@@ -241,7 +239,7 @@ P.audit=()=>`<div class="notice">Every admin action is recorded: who, what, modu
 /* ---------- shell / router ---------- */
 let route='dashboard';
 function loginView(){
-  $('#root').innerHTML=`<div class="a-login"><form class="box" id="lf"><img src="assets/img/logo.svg" width="48" height="48" alt="" style="border-radius:10px"><h1>Admin sign in</h1><p class="sub">higher.study control panel</p>
+  $('#root').innerHTML=`<div class="a-login"><form class="box" id="lf"><img src="logo.svg" width="48" height="48" alt="" style="border-radius:10px"><h1>Admin sign in</h1><p class="sub">higher.study control panel</p>
   <div class="field" data-f="email"><label>Email</label><input id="a-email" type="email" autocomplete="username"></div><div class="field" data-f="pw"><label>Password</label><input id="a-pw" type="password" autocomplete="current-password"><div class="msg" id="a-err" style="display:none">Incorrect email or password, or the account is deactivated.</div></div>
   <button class="btn btn-primary btn-lg" style="width:100%" type="submit">Sign in</button>
   <div class="demo-box"><b>Demo accounts (prototype only) — click to fill</b>${ADM0.map(a=>`<button type="button" data-fill="${a.email}|${a.pw}">${a.role}<br><span style="color:var(--muted)">${a.email} · ${a.pw}</span></button>`).join('')}</div><p style="text-align:center;margin:14px 0 0"><a href="index.html" style="color:var(--brand)">← Back to website</a></p></form></div>`;
@@ -250,12 +248,12 @@ function loginView(){
   $$('[data-fill]').forEach(b=>b.onclick=()=>{const[x,y]=b.dataset.fill.split('|');$('#a-email').value=x;$('#a-pw').value=y})}
 function shell(){
   const first=MODS.find(m=>can(m[0]))?.[0];if(!can(route))route=first||'dashboard';
-  $('#root').innerHTML=`<div class="a-shell"><nav class="a-side" id="side"><div class="logo"><img src="assets/img/logo.svg" alt="">higher.study</div>${MODS.map(m=>can(m[0])?`<a href="#${m[0]}" class="${route===m[0]?'on':''}"><span style="width:18px;text-align:center">${m[2]}</span>${m[1]}</a>`:'').join('')}
+  $('#root').innerHTML=`<div class="a-shell"><nav class="a-side" id="side"><div class="logo"><img src="logo.svg" alt="">higher.study</div>${MODS.map(m=>can(m[0])?`<a href="#${m[0]}" class="${route===m[0]?'on':''}"><span style="width:18px;text-align:center">${m[2]}</span>${m[1]}</a>`:'').join('')}
   <div class="grp">Hidden for your role</div><div style="font-size:12.5px;padding:0 12px;color:#8d7f78">${MODS.filter(m=>!can(m[0])).map(m=>m[1]).join(', ')||'None'}</div></nav>
   <div><div class="a-top"><div class="ml"><button class="btn-s mob-toggle" data-act="menu">☰</button><h2 id="ttl"></h2></div><div class="who"><div><b>${esc(me.name)}</b>${esc(me.role)}</div><a class="btn-s" href="index.html" target="_blank">View site</a><button class="btn-s" data-act="logout">Sign out</button></div></div><main class="a-main" id="main"></main></div></div>`;
   render()}
 function render(){const m=MODS.find(x=>x[0]===route);$('#ttl').textContent=m[1];$('#main').innerHTML=can(route)?P[route]():denied();$$('#side a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+route))}
-function boot(){if(!me){loginView();return}route=(location.hash||'#dashboard').slice(1);if(!P[route])route='dashboard';shell()}
+function boot(){if(!me){loginView();return}try{if(localStorage.getItem('hs_admin_via')){localStorage.removeItem('hs_admin_via');log('Signed in (from main site login)','Authentication')}}catch(e){}route=(location.hash||'#dashboard').slice(1);if(!P[route])route='dashboard';shell()}
 window.addEventListener('hashchange',()=>{if(!me)return;const r=location.hash.slice(1);if(P[r]){route=r;sel.clear();render();$('#side').classList.remove('open')}});
 
 /* ---------- events ---------- */
